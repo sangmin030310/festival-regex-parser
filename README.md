@@ -14,7 +14,7 @@ Python의 `re` 모듈을 사용했고, 마지막에는 부스별 매출액을 �
 ## 2. 파일 구성 및 실행 방법
 
 ```text
-festival_regex_submission/
+festival-regex-parser/
 ├── main.py           # 정규표현식으로 데이터 추출
 ├── festival_log.txt  # 수업에서 제공된 로그 데이터
 ├── test_main.py      # 조건에 맞는지 확인하는 테스트
