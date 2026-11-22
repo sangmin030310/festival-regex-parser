@@ -87,5 +87,86 @@ class RegexTest(unittest.TestCase):
         self.assertEqual(data["total_sales"], 1_350_000)
 
 
+    def test_email_allowed_characters_and_multilevel_domain(self):
+        text = "user.name+class@jj.ac.kr student_1@sample.co.kr"
+        self.assertEqual(
+            EMAIL_PATTERN.findall(text),
+            ["user.name+class@jj.ac.kr", "student_1@sample.co.kr"],
+        )
+
+    def test_email_bad_top_level_domain(self):
+        text = "wrong@host.1 wrong@host.a wrong@host..kr good@host.kr"
+        self.assertEqual(EMAIL_PATTERN.findall(text), ["good@host.kr"])
+
+    def test_email_near_sentence_punctuation(self):
+        text = "문의: help@jj.ac.kr, 응답: staff@sample.org."
+        self.assertEqual(
+            EMAIL_PATTERN.findall(text),
+            ["help@jj.ac.kr", "staff@sample.org"],
+        )
+
+    def test_phone_two_numbers_on_one_line(self):
+        text = "A 010-1111-2222 B 010 3333 4444 C 010.5555.6666"
+        self.assertEqual(
+            PHONE_PATTERN.findall(text),
+            ["010-1111-2222", "010 3333 4444", "010.5555.6666"],
+        )
+
+    def test_phone_rejects_extra_digits_and_letters(self):
+        text = "010-1111-22222 010.1111.2222x 1010-1111-2222"
+        self.assertEqual(PHONE_PATTERN.findall(text), [])
+
+    def test_student_spaces_and_ten_digits(self):
+        text = "[202400001/인공지능학과] [2024000001 / 컴퓨터공학과]"
+        self.assertEqual(
+            STUDENT_PATTERN.findall(text),
+            [("202400001", "인공지능학과")],
+        )
+
+    def test_github_links_with_punctuation(self):
+        text = "(https://github.com/team1/proj-1), https://github.com/team2/proj2.git."
+        self.assertEqual(
+            GITHUB_PATTERN.findall(text),
+            ["https://github.com/team1/proj-1", "https://github.com/team2/proj2.git"],
+        )
+
+    def test_coupon_boundaries(self):
+        text = "A-FEST-2026-AB12 FEST-2026-AB123 FEST-2026-AB12!"
+        self.assertEqual(COUPON_PATTERN.findall(text), ["FEST-2026-AB12"])
+
+    def test_sales_only_total_not_other_money(self):
+        text = (
+            "2. 정산\n"
+            "- A 부스 매출: 4,000원 (카드 3,000원 / 현금 1,000원)\n"
+            "- B 부스 매출: 12,500원 (쿠폰 5,000원)\n"
+            "3. 공지\n"
+        )
+        data = extract_data(text)
+        self.assertEqual(data["sales"], [("A 부스", 4000), ("B 부스", 12500)])
+        self.assertEqual(data["total_sales"], 16500)
+
+    def test_no_sales_section(self):
+        text = "1. 참가자\n- A 부스 매출: 100,000원\n3. 공지\n"
+        self.assertEqual(extract_data(text)["total_sales"], 0)
+
+    def test_real_log_exact_result_values(self):
+        text = (Path(__file__).resolve().parent / "festival_log.txt").read_text(encoding="utf-8-sig")
+        data = extract_data(text)
+        self.assertEqual(data["students"], [
+            ("202410512", "인공지능학과"),
+            ("202521088", "컴퓨터공학과"),
+            ("202230415", "전자전기공학부"),
+        ])
+        self.assertEqual(data["coupons"], [
+            "FEST-2026-DC01", "FEST-2026-BH99", "FEST-2026-GP77",
+        ])
+        self.assertEqual(data["sales"], [
+            ("타코야끼 푸드트럭", 1350000),
+            ("불초밥 & 닭꼬치 부스", 2180500),
+            ("수제 추로스 & 에이드", 840000),
+            ("공과대학 학생회 주점", 1920000),
+        ])
+
+
 if __name__ == "__main__":
     unittest.main()
