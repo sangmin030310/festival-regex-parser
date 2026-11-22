@@ -1,0 +1,6 @@
+# Python cache and local development artifacts
+__pycache__/
+*.py[cod]
+.venv/
+.vscode/
+.pytest_cache/
